@@ -1,0 +1,20 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.universal.saf.plugin">
+
+    <application>
+        <meta-data android:name="xposedmodule" android:value="true" />
+        <meta-data android:name="xposeddescription" android:value="通用 SAF 注入器：暴露 App 私有目录给 Termux/文件管理器" />
+        <meta-data android:name="xposedminversion" android:value="54" />
+
+        <provider
+            android:name=".SAFProvider"
+            android:authorities="${applicationId}.universal.saf"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+    </application>
+</manifest>

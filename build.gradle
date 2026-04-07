@@ -1,0 +1,27 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.universal.saf.plugin'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.universal.saf.plugin"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    // 仅编译时依赖，不需要打包进 APK，减小体积
+    compileOnly 'androidx.annotation:annotation:1.7.0'
+}
