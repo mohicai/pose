@@ -1,6 +1,22 @@
-plugins {
-    id 'com.android.application'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // 添加 Android Gradle Plugin 依赖和版本
+        classpath 'com.android.tools.build:gradle:8.2.2'
+    }
 }
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.application'
 
 android {
     namespace 'com.universal.saf.plugin'
@@ -19,9 +35,12 @@ android {
             minifyEnabled false
         }
     }
-}
 
-dependencies {
-    // 仅编译时依赖，不需要打包进 APK，减小体积
-    compileOnly 'androidx.annotation:annotation:1.7.0'
+    // 指定源码位置，确保能找到你的 SAFProvider.java
+    sourceSets {
+        main {
+            java.srcDirs = ['.'] 
+            manifest.srcFile 'AndroidManifest.xml'
+        }
+    }
 }
