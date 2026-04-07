@@ -4,7 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // 添加 Android Gradle Plugin 依赖和版本
+        // 使用更稳定的 AGP 版本
         classpath 'com.android.tools.build:gradle:8.2.2'
     }
 }
@@ -36,11 +36,17 @@ android {
         }
     }
 
-    // 指定源码位置，确保能找到你的 SAFProvider.java
     sourceSets {
         main {
-            java.srcDirs = ['.'] 
+            java.srcDirs = ['.']
             manifest.srcFile 'AndroidManifest.xml'
         }
     }
+}
+
+// 核心修复：解决 Gradle 9.x 的隐式依赖校验错误
+tasks.matching { it.name.startsWith("compile") && it.name.contains("JavaWithJavac") }.all { task ->
+    // 强制声明任务顺序，解决 desugar 和 duplicateClasses 的校验问题
+    task.mustRunAfter(tasks.matching { it.name.contains("desugar") })
+    task.mustRunAfter(tasks.matching { it.name.contains("check") && it.name.contains("DuplicateClasses") })
 }
