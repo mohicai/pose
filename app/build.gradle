@@ -19,6 +19,8 @@ android {
     }
 }
 
+
 dependencies {
-    compileOnly 'androidx.annotation:annotation:1.7.0'
+    // 将 compileOnly 改为 implementation
+    implementation 'androidx.annotation:annotation:1.7.0'
 }
