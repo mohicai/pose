@@ -1,30 +1,16 @@
-// ... 前面 android { ... } 配置保持不变 ...
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.2'
+    }
+}
 
-afterEvaluate {
-    def compileTask = tasks.findByName('compileReleaseJavaWithJavac')
-    if (compileTask) {
-        // 1. 定义会导致循环依赖的任务黑名单（这些任务必须在编译之后运行）
-        def blacklist = ["dex", "lint", "javadoc", "test", "artprofile", "signing", "bundle", "package"]
-        
-        // 2. 匹配所有可能产生冲突但不会导致循环的任务
-        def prerequisiteTasks = tasks.matching { t ->
-            String name = t.name.toLowerCase()
-            // 必须包含这些关键字
-            def isCandidate = (name.contains("merge") || 
-                               name.contains("process") || 
-                               name.contains("compress") || 
-                               name.contains("extract") || 
-                               name.contains("generate") ||
-                               name.contains("check"))
-            
-            // 且绝对不能包含黑名单中的关键字
-            def inBlacklist = blacklist.any { b -> name.contains(b) }
-            
-            return isCandidate && !inBlacklist && t.name != compileTask.name
-        }
-        
-        prerequisiteTasks.each { t ->
-            compileTask.mustRunAfter(t)
-        }
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
     }
 }
