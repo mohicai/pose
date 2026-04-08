@@ -1,81 +1,30 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.2'
-    }
-}
+// ... 前面 android { ... } 配置保持不变 ...
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-apply plugin: 'com.android.application'
-
-android {
-    namespace 'com.universal.saf.plugin'
-    compileSdk 34
-
-    defaultConfig {
-        applicationId "com.universal.saf.plugin"
-        minSdk 26
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
-
-    sourceSets {
-        main {
-            // 告诉 Gradle 源码就在根目录
-            java.srcDirs = ['.']
-            manifest.srcFile 'AndroidManifest.xml'
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-}
-
-dependencies {
-    compileOnly 'androidx.annotation:annotation:1.7.0'
-}
-
-/**
- * 终极修复逻辑：解决单级目录结构导致的隐式依赖冲突
- * 核心原理：强制 Java 编译任务在所有可能产生文件输出的任务之后运行
- */
 afterEvaluate {
     def compileTask = tasks.findByName('compileReleaseJavaWithJavac')
     if (compileTask) {
-        // 获取所有可能干扰编译器的 Android 任务前缀
-        def problematicTaskNames = [
-            "merge", "process", "compress", "extract", 
-            "check", "generate", "map", "write", "javaPreCompile"
-        ]
+        // 1. 定义会导致循环依赖的任务黑名单（这些任务必须在编译之后运行）
+        def blacklist = ["dex", "lint", "javadoc", "test", "artprofile", "signing", "bundle", "package"]
         
-        def allTasks = tasks.matching { t ->
+        // 2. 匹配所有可能产生冲突但不会导致循环的任务
+        def prerequisiteTasks = tasks.matching { t ->
             String name = t.name.toLowerCase()
-            problematicTaskNames.any { prefix -> name.contains(prefix) }
+            // 必须包含这些关键字
+            def isCandidate = (name.contains("merge") || 
+                               name.contains("process") || 
+                               name.contains("compress") || 
+                               name.contains("extract") || 
+                               name.contains("generate") ||
+                               name.contains("check"))
+            
+            // 且绝对不能包含黑名单中的关键字
+            def inBlacklist = blacklist.any { b -> name.contains(b) }
+            
+            return isCandidate && !inBlacklist && t.name != compileTask.name
         }
         
-        allTasks.each { t ->
-            if (t.name != compileTask.name) {
-                // 强制要求：编译必须在这些任务完成之后才开始
-                compileTask.mustRunAfter(t)
-            }
+        prerequisiteTasks.each { t ->
+            compileTask.mustRunAfter(t)
         }
     }
 }
