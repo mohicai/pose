@@ -4,7 +4,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // 使用稳定的 Android Gradle Plugin 版本
         classpath 'com.android.tools.build:gradle:8.2.2'
     }
 }
@@ -19,7 +18,6 @@ allprojects {
 apply plugin: 'com.android.application'
 
 android {
-    // 命名空间需与 SAFProvider.java 中的 package 一致
     namespace 'com.universal.saf.plugin'
     compileSdk 34
 
@@ -34,20 +32,17 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            // 确保不启用混淆以维持插件兼容性
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
         }
     }
 
-    // 核心配置：指定单文件结构的源码位置
     sourceSets {
         main {
-            java.srcDirs = ['.'] // 源码就在根目录
-            manifest.srcFile 'AndroidManifest.xml' // 清单文件在根目录
+            // 告诉 Gradle 源码就在根目录
+            java.srcDirs = ['.']
+            manifest.srcFile 'AndroidManifest.xml'
         }
     }
 
-    // 解决编译选项冲突
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -55,42 +50,32 @@ android {
 }
 
 dependencies {
-    // 仅在编译时需要的依赖，减小 APK 体积
     compileOnly 'androidx.annotation:annotation:1.7.0'
 }
 
 /**
- * 任务依赖修复逻辑：解决 Gradle 8.5+ 的隐式依赖校验失败 (Validation Problems)
- * 强制要求 Java 编译任务在所有合并、脱糖和清单处理任务之后运行
+ * 终极修复逻辑：解决单级目录结构导致的隐式依赖冲突
+ * 核心原理：强制 Java 编译任务在所有可能产生文件输出的任务之后运行
  */
 afterEvaluate {
     def compileTask = tasks.findByName('compileReleaseJavaWithJavac')
     if (compileTask) {
-        // 定义所有可能产生隐式输出冲突的任务名称
-        def prerequisiteTasks = [
-            'mergeExtDexRelease',
-            'mergeReleaseJniLibFolders',
-            'mergeReleaseAssets',
-            'mergeReleaseResources',
-            'processReleaseManifest',
-            'processReleaseResources',
-            'checkReleaseDuplicateClasses',
-            'desugarReleaseFileDependencies'
+        // 获取所有可能干扰编译器的 Android 任务前缀
+        def problematicTaskNames = [
+            "merge", "process", "compress", "extract", 
+            "check", "generate", "map", "write", "javaPreCompile"
         ]
         
-        prerequisiteTasks.each { taskName ->
-            def target = tasks.findByName(taskName)
-            if (target) {
-                // 强制声明编译任务必须在这些任务之后执行，消除校验报错
-                compileTask.mustRunAfter(target)
+        def allTasks = tasks.matching { t ->
+            String name = t.name.toLowerCase()
+            problematicTaskNames.any { prefix -> name.contains(prefix) }
+        }
+        
+        allTasks.each { t ->
+            if (t.name != compileTask.name) {
+                // 强制要求：编译必须在这些任务完成之后才开始
+                compileTask.mustRunAfter(t)
             }
         }
-    }
-}
-
-// 额外的兜底逻辑：拦截所有 compile 任务
-tasks.matching { it.name.contains("JavaWithJavac") }.all { task ->
-    task.doFirst {
-        println "正在执行任务顺序修正，确保隐式依赖校验通过..."
     }
 }
