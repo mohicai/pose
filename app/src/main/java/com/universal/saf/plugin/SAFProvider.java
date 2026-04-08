@@ -216,6 +216,12 @@ public class SAFProvider extends DocumentsProvider {
         row.add(Document.COLUMN_MIME_TYPE, getDocumentType(docId));
         row.add(Document.COLUMN_LAST_MODIFIED, file.lastModified());
         row.add(Document.COLUMN_FLAGS, flags);
-        row.add(Document.COLUMN_ICON, file.isDirectory() ? android.R.drawable.ic_menu_archive : android.R.drawable.ic_menu_edit);
+        
+        
+        
+        // 使用 ic_dialog_info (文件夹) 和 ic_menu_edit (文件)
+row.add(Document.COLUMN_ICON, file.isDirectory() ? android.R.drawable.ic_dialog_info : android.R.drawable.ic_menu_edit);
+
+       // row.add(Document.COLUMN_ICON, file.isDirectory() ? android.R.drawable.ic_menu_archive : android.R.drawable.ic_menu_edit);
     }
 }
