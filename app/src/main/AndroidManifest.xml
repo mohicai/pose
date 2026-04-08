@@ -6,11 +6,12 @@
         <meta-data android:name="xposedminversion" android:value="54" />
 
         <provider
-            android:name=".SAFProvider"
+            android:name="com.universal.saf.plugin.SAFProvider"
             android:authorities="${applicationId}.universal.saf"
             android:exported="true"
             android:grantUriPermissions="true"
-            android:permission="android.permission.MANAGE_DOCUMENTS">
+            android:enabled="true"
+            android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>
